@@ -1,117 +1,107 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, Button } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BackgroundService from 'react-native-background-actions';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const fibonacci = (max) => {
+  const sequence = [0, 1];
+  let next = 1;
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  while (next <= max) {
+    sequence.push(next);
+    next = sequence[sequence.length - 1] + sequence[sequence.length - 2];
+  }
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  return sequence;
+};
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+const veryIntensiveTask = async (taskDataArguments) => {
+    console.log('START  3333');
+    /*
+  const { delay } = taskDataArguments;
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const fibList = fibonacci(1000);
+  await AsyncStorage.setItem('fibList', JSON.stringify(fibList));
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  await new Promise(async (resolve) => {
+    for (let i = 0; BackgroundService.isRunning(); i++) {
+      console.log(i);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    resolve();
+  });*/
+};
+
+const options = {
+  taskName: 'FibonacciTask',
+  taskTitle: 'Fibonacci Calculation',
+  taskDesc: 'Calculating Fibonacci numbers up to 1000.',
+  taskIcon: {
+    name: 'ic_launcher',
+    type: 'mipmap',
+  },
+  color: '#ff00ff',
+  linkingURI: 'yourSchemeHere://chat/jane', // Replace with your actual deep link URI
+  parameters: {
+    delay: 1000,
+  },
+};
+
+const App = () => {
+  const [fibList, setFibList] = useState([]);
+
+  const loadFibList = async () => {
+    const storedFibList = await AsyncStorage.getItem('fibList');
+    if (storedFibList) {
+      setFibList(JSON.parse(storedFibList));
+    }
+  };
+
+  useEffect(() => {
+    loadFibList();
+  }, []);
+
+  const startBackgroundTask = async () => {
+    console.log('START 2222');
+    await BackgroundService.start(veryIntensiveTask, options);
+    // await loadFibList();
+  };
+
+  const stopBackgroundTask = async () => {
+    await BackgroundService.stop();
+    await loadFibList();
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <View style={styles.container}>
+      <Text style={styles.title}>Fibonacci Sequence up to 1000</Text>
+      <Button title="Start Task" onPress={startBackgroundTask} />
+      <Button title="Stop Task" onPress={stopBackgroundTask} />
+      <FlatList
+        data={fibList}
+        keyExtractor={(item) => item.toString()}
+        renderItem={({ item }) => (
+          <Text style={styles.item}>{item}</Text>
+        )}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 50,
   },
-  sectionTitle: {
+  title: {
     fontSize: 24,
-    fontWeight: '600',
+    marginBottom: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
+  item: {
     fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+    paddingVertical: 10,
   },
 });
 
